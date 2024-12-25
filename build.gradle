@@ -3,6 +3,7 @@ plugins {
 	id 'org.jetbrains.kotlin.plugin.spring' version '1.9.25'
 	id 'org.springframework.boot' version '3.4.1-SNAPSHOT'
 	id 'io.spring.dependency-management' version '1.1.6'
+	id 'org.jetbrains.dokka' version '1.9.0'
 }
 
 group = 'ru.queuejw'
@@ -31,6 +32,14 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+configurations.matching { it.name.startsWith("dokka") }.configureEach {
+	resolutionStrategy.eachDependency {
+		if (requested.group.startsWith("com.fasterxml.jackson")) {
+			useVersion("2.15.3")
+		}
+	}
 }
 
 kotlin {

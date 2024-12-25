@@ -2,42 +2,21 @@ package ru.queuejw.messenger.services
 
 import org.springframework.stereotype.Service
 import ru.queuejw.messenger.model.Message
-import java.nio.file.Files
-import java.nio.file.Paths
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.net.Socket
 import java.time.LocalDateTime
 import java.util.*
 
-/**
- * Сервис для управления сообщениями.
- */
 @Service
 class MessageService {
+    private val serverHost = "localhost"
+    private val serverPort = 5190
 
-    private val objectMapper = jacksonObjectMapper()
-
-    init {
-        // Создаем директорию messages, если она не существует
-        val messagesDirectory = Paths.get("messages")
-        if (!Files.exists(messagesDirectory)) {
-            try {
-                Files.createDirectories(messagesDirectory)
-            } catch (e: Exception) {
-                throw RuntimeException("Не удалось создать директорию messages", e)
-            }
-        }
-    }
-
-    /**
-     * Отправляет сообщение пользователю.
-     *
-     * @param senderId ID отправителя.
-     * @param recipientId ID получателя.
-     * @param content Содержимое сообщения.
-     * @return Отправленное сообщение.
-     */
     fun sendMessage(senderId: String, recipientId: String, content: String): Message {
+        println("[DEBUG] Sending message via OSCAR: senderId=$senderId, recipientId=$recipientId, content=$content")
         val message = Message(
             id = UUID.randomUUID().toString(),
             senderId = senderId,
@@ -46,33 +25,50 @@ class MessageService {
             timestamp = LocalDateTime.now().toString()
         )
 
-        val messageFilePath = Paths.get("messages", message.id)
         try {
-            // Сохраняем сообщение в файл
-            Files.write(messageFilePath, objectMapper.writeValueAsBytes(message))
+            Socket(serverHost, serverPort).use { socket ->
+                val output = BufferedWriter(OutputStreamWriter(socket.getOutputStream()))
+                output.write("SEND|${message.senderId}|${message.recipientId}|${message.content}|${message.timestamp}\n")
+                output.flush()
+            }
         } catch (e: Exception) {
-            throw RuntimeException("Не удалось отправить сообщение", e)
+            println("[DEBUG] Error sending message via OSCAR: ${e.message}")
+            throw RuntimeException("Не удалось отправить сообщение через OSCAR: ${e.message}", e)
         }
-
         return message
     }
 
-    /**
-     * Получает все сообщения, отправленные пользователю.
-     *
-     * @param userId ID пользователя.
-     * @return Список сообщений, полученных пользователем.
-     */
     fun getMessagesForUser(userId: String): List<Message> {
-        val messageFiles = Files.walk(Paths.get("messages"))
-            .filter { Files.isRegularFile(it) }
-            .toList()
+        println("[DEBUG] Fetching messages via OSCAR for userId=$userId")
+        val messages = mutableListOf<Message>()
+        try {
+            Socket(serverHost, serverPort).use { socket ->
+                val output = BufferedWriter(OutputStreamWriter(socket.getOutputStream()))
+                val input = BufferedReader(InputStreamReader(socket.getInputStream()))
+                output.write("RECEIVE|$userId\n")
+                output.flush()
 
-        return messageFiles.map { path ->
-            // Исправляем десериализацию
-            objectMapper.readValue<Message>(path.toFile())
-        }.filter { it.recipientId == userId } // Фильтрация по получателю
+                var response: String?
+                while (input.readLine().also { response = it } != null) {
+                    println("[DEBUG] OSCAR server response: $response")
+                    val parts = response!!.split("|")
+                    if (parts.size == 6 && parts[0] == "MESSAGE") {
+                        messages.add(
+                            Message(
+                                id = parts[1],
+                                senderId = parts[2],
+                                recipientId = parts[3],
+                                content = parts[4],
+                                timestamp = parts[5]
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            println("[DEBUG] Error fetching messages: ${e.message}")
+            throw RuntimeException("Не удалось получить сообщения через OSCAR: ${e.message}", e)
+        }
+        return messages
     }
-
-
 }
