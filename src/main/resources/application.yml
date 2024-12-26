@@ -1,0 +1,8 @@
+server:
+  ssl:
+    key-alias: spring-https
+    key-store: classpath:keystore.jks
+    key-store-type: JKS
+    key-password: SkFn~%dENGdkN86n
+    key-store-password: SkFn~%dENGdkN86n
+    enabled: true
