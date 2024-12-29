@@ -1,7 +1,5 @@
 package ru.queuejw.messenger.model
 
-import java.time.LocalDateTime
-
 /**
  * Класс, представляющий сообщение.
  *

@@ -1,4 +1,5 @@
 HELP.md
+/chats
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -38,3 +39,4 @@ out/
 
 ### Kotlin ###
 .kotlin
+/local.properties

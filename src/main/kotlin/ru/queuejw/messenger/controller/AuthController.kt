@@ -1,11 +1,11 @@
 package ru.queuejw.messenger.controller
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.*
-import ru.queuejw.messenger.util.AESUtils
-import org.springframework.http.ResponseEntity
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
 import ru.queuejw.messenger.services.UserService
+import ru.queuejw.messenger.util.AESUtils
 
 /**
  * Контроллер для аутентификации пользователей.

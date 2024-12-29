@@ -2,9 +2,9 @@ package ru.queuejw.messenger.util
 
 import org.springframework.stereotype.Component
 import java.security.Key
+import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
-import java.util.Base64
 
 /**
  * Утилитный объект для работы с шифрованием и дешифрованием данных с использованием алгоритма AES.
